@@ -1,0 +1,21 @@
+{
+  "name": "airsend",
+  "version": "0.0.1",
+  "description": "ios-windows data transfer",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "author": "glink25",
+  "license": "ISC",
+  "devDependencies": {
+    "electron": "^9.0.4"
+  },
+  "dependencies": {
+    "electron-store": "^5.2.0",
+    "express": "^4.17.1",
+    "http-server": "^0.12.3",
+    "multer": "^1.4.2",
+    "qr-image": "^3.2.0",
+  }
+}
