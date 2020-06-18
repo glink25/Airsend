@@ -122,7 +122,7 @@
         remote.shell.openExternal(remote.app.FILEPATH)
       }
       function taphelp(){
-        remote.shell.openExternal('www.github.com')
+        remote.shell.openExternal('https://github.com/glink25/Airsend')
       }
     </script>
   </head>
@@ -158,6 +158,9 @@
       as.addEventListener('change',function(e){
         store.set('autostart',e.target.checked)
         remote.app.AUTOSTART=store.get('autostart')
+        remote.app.setLoginItemSettings({
+          openAtLogin:store.get('autostart')
+        })
         console.log(remote.app.AUTOSTART)
       })
 
@@ -171,6 +174,7 @@
       var dir=document.getElementById('folder_name');dir.innerHTML=store.get('folder')
       dir.addEventListener('click',function(e){
         //ipcRenderer.send('choosepath')
+        e.cancelBubble=true
         async function opendialog(){
           const result=await remote.dialog.showOpenDialog({
             properties: ['openDirectory'],

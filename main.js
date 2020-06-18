@@ -25,6 +25,16 @@ app.AUTOOPEN=store.get('autoopen')
 var path = require('path');
 const Menu=electron.Menu
 
+const exeName = path.basename(process.execPath)//开机启动
+app.setLoginItemSettings({
+  openAtLogin: true,
+  openAsHidden:true,
+  path: process.execPath,
+  args: [
+    '--processStart', `"${exeName}"`,
+  ]
+})
+
 function createWindow () {   
   // 创建浏览器窗口
   Menu.setApplicationMenu(null)
@@ -37,6 +47,8 @@ function createWindow () {
       nodeIntegration: true
     }
   })
+  win.hide()
+  win.setSkipTaskbar(true)
   //win.webContents.openDevTools({mode:'detach'})//打开开发者工具
   const {ipcMain}=require('electron')
   ipcMain.on('app:hide',(e,arg)=>{
@@ -45,6 +57,11 @@ function createWindow () {
   })
   // 并且为你的应用加载index.html
   win.loadFile('index.html')
+  win.on('close',(e)=>{
+    win.hide()
+    win.setSkipTaskbar(true)
+    e.preventDefault()
+  })
   var ipaddress=getIp()+':'+port
   app.ipaddress=ipaddress
   var image=qr.imageSync(ipaddress)
@@ -79,27 +96,11 @@ function createWindow () {
 app.whenReady().then(createWindow)
 
 //当所有窗口都被关闭后退出
-// app.on('quit', () => {
-//   // 在 macOS 上，除非用户用 Cmd + Q 确定地退出，
-//   // 否则绝大部分应用及其菜单栏会保持激活。
-//   console.log('exit')
-//   if (process.platform !== 'darwin') {
-//     app.exit()
-//   }
-//   if (!openExec) {
-//     // console.log('openExec is null')
-//   } else {
-//     exec('taskkill /f /t /im node.exe', function (error, stdout, stderr) {
-//       if (error) {
-//         console.log(error.stack);
-//         console.log('Error code: ' + error.code);
-//         return;
-//       }
-//       console.log('使用exec方法输出: ' + stdout);
-//       console.log(`stderr: ${stderr}`);
-//     });
-//   }
-// })
+app.on('quit', (e) => {
+  // 在 macOS 上，除非用户用 Cmd + Q 确定地退出，
+  // 否则绝大部分应用及其菜单栏会保持激活。
+  console.log('exited')
+})
 
 
 
