@@ -6,6 +6,7 @@ const qr=require('qr-image')
 const Store=require('electron-store')
 var fs = require('fs');
 var store=new Store()
+var port='9998'
 const username=require('os').userInfo().username
 const file_rec='C:/Users/'+username+'/Downloads/Airsend'
 if(!store.get('folder')){
@@ -129,7 +130,7 @@ e_app.use(bodyParser.json());
 // 访问静态资源文件 这里是访问所有dist目录下的静态资源文件
 e_app.use(express.static(e_path.resolve(__dirname, './server')))
 e_app.use(express.static('public'));
-e_app.use(multer({dest: './server'}).array('file')); 
+e_app.use(multer({dest: e_path.resolve(__dirname, './server')}).array('file')); 
 
 e_app.get('／g', function(req, res) {
   console.log('new get request')
@@ -182,6 +183,7 @@ e_app.post('/',function(req,res,next){
                 }else{
                   if(app.AUTOOPEN){//自动打开文件
                     shell.openPath(dir_file)
+                    console.log('file:'+dir_file)
                   }
                 }
                 
@@ -202,7 +204,7 @@ e_app.all('*', function(req, res, next) {
   res.header("Access-Control-Allow-Headers", "content-type");
   next();
 });
-var port='9998'
+
 e_app.listen(port,function(){
     console.log('express started'+getIp())
     
