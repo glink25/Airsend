@@ -38,7 +38,7 @@ app.setLoginItemSettings({
     '--processStart', `"${exeName}"`,
   ]
 })
-function clipboardChange() {
+function clipboardChange() {//监听剪贴板
   setInterval(() => {
     let clippath = app.SENDPATH + '\\clipboard.txt'
     var cliptxt = clipboard.readText()
