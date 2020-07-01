@@ -9,6 +9,7 @@ var store=new Store()
 var port='9998'
 const username=require('os').userInfo().username
 const file_rec='C:/Users/'+username+'/Downloads/Airsend'
+const file_send='C:/Users/'+username+'/Downloads/Airsend/send'
 if(!store.get('folder')){
   store.set('folder',file_rec)
   fs.access(file_rec,err=>{
@@ -18,10 +19,12 @@ if(!store.get('folder')){
   })
   store.set('autostart',true)
   store.set('autoopen',true)
+  store.set('sendpath',file_send)
 }
 app.FILEPATH=store.get('folder')
 app.AUTOSTART=store.get('autostart')
 app.AUTOOPEN=store.get('autoopen')
+app.SENDPATH=store.get('sendpath')
 
 var path = require('path');
 const Menu=electron.Menu
@@ -55,6 +58,16 @@ function createWindow () {
   ipcMain.on('app:hide',(e,arg)=>{
     win.hide()
     win.setSkipTaskbar(true)
+  })
+  ipcMain.on('dragstart',(e,filepath)=>{
+    let filename=filepath.split('\\')[filepath.split('\\').length-1]
+    console.log(filepath,filename)
+    console.log(app.SENDPATH)
+    if(!fs.existsSync(app.SENDPATH))fs.mkdirSync(app.SENDPATH)
+    fs.copyFile(filepath,app.SENDPATH+'/'+filename,err=>{
+      if(err)console.log(err)
+      else console.log('copy successs at'+app.SENDPATH+'/'+filename)
+    })
   })
   // 并且为你的应用加载index.html
   win.loadFile('index.html')
@@ -123,20 +136,71 @@ app.on('activate', () => {
 const multer = require('multer');
 var bodyParser = require('body-parser');
 const express=require('express');
+var router=express.Router()
 const e_app=express()
 var e_path=require('path')
+const e = require('express')
 e_app.use(bodyParser.json());
 
-// 访问静态资源文件 这里是访问所有dist目录下的静态资源文件
+// 访问静态资源文件 这里是访问所有server目录下的静态资源文件
 e_app.use(express.static(e_path.resolve(__dirname, './server')))
 e_app.use(express.static('public'));
 e_app.use(multer({dest: e_path.resolve(__dirname, './server')}).array('file')); 
-
-e_app.get('／g', function(req, res) {
-  console.log('new get request')
-  const html = fs.readFile(e_path.resolve(__dirname, './server/index.html'), 'utf-8');
-  res.send(html)
+e_app.use(function(req, res, next) { 
+  res.header("Access-Control-Allow-Origin", "*"); 
+  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+  next();
 });
+
+e_app.use('/get',function(req,res){
+  let filename=req.query.name
+  if(!filename){
+    console.log('GET request')
+    var filePath = app.SENDPATH;
+    fs.readdir(filePath, function(err, results){
+      if(err) throw err;
+      if(results.length>0) {
+      var files = [];
+      var tags=''
+      results.forEach(function(file){
+      if(fs.statSync(path.join(filePath, file)).isFile()){
+        files.push(file);
+        tags+='<a href="/get?name='+file+'">'+file+'</a><br>'
+      }
+      })
+      
+      let html='<!DOCTYPE html><html><head></head><body>'+tags+'</body></html>'
+      res.send(html)
+      } else {
+      res.end('no file');
+      }
+    });
+  }
+  else{
+    let filepath=app.SENDPATH+'/'+filename
+    console.log('download start:'+filepath)
+    res.download(filepath, filename, function(err){
+      if (err) {
+        // 错误处理，注意他可能会部分发送响应
+        // 因此请检查好  res.headersSent
+      } else {
+        // 减少下载验证
+        
+      }
+    });
+  }
+  
+  
+})
+
+// e_app.use('/get',function(req,res){
+//   res.send('hello')
+// })
+
+e_app.get('download/:name',function(req,res){
+  
+})
+
 e_app.post('/',function(req,res,next){
     var query = req.body;
     console.log(JSON.stringify(req.files))
@@ -206,7 +270,7 @@ e_app.all('*', function(req, res, next) {
 });
 
 e_app.listen(port,function(){
-    console.log('express started'+getIp())
+    console.log('express started:'+getIp())
     
 })
 function getIp(){

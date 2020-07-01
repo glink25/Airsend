@@ -115,6 +115,18 @@
           font-size: 10px !important;
           white-space: wrap;
         }
+        .dropwrap{
+          position: absolute;
+          width: 100%;
+          height: 100%;
+          top:0;left: 0;
+          opacity: 0.5;
+          background-color: white;
+          text-align: center;
+          line-height: 100vh;
+          color: black;
+          visibility: hidden;
+        }
     </style>
     <script>
       const { ipcRenderer } = require('electron');
@@ -125,6 +137,9 @@
       const { remote }=require('electron')
       function openfolder(){
         remote.shell.openExternal(remote.app.FILEPATH)
+      }
+      function openSendfolder(){
+        remote.shell.openExternal(remote.app.SENDPATH)
       }
       function taphelp(){
         remote.shell.openExternal('https://github.com/glink25/Airsend')
@@ -144,14 +159,52 @@
         </div>
         <div class="qrcode"><img src="" alt="加载中" id='qrcode' class="qrimage"></div>
         <div class="config">
-          <div class="folder" onclick="openfolder()">文件接收目录：<div class="folder_name" id="folder_name"></div></div>
-          <div class="autostart">允许开机启动：<input type="checkbox" name="autostart" id="as"></div>
-          <div class="autoopen">自动打开文件：<input type="checkbox" name="autoopen" id="ao"></div>
+          <div class="folder-wrapper">
+            <div class="folder" onclick="openfolder()">文件接收目录：<div class="folder_name" id="folder_name"></div></div>
+            <div class="folder" onclick="openSendfolder()">文件发送目录：<div class="folder_name" id="send_name"></div></div>
+          </div>
+          <div class="else">
+            <div class="autostart">允许开机启动：<input type="checkbox" name="autostart" id="as"></div>
+            <div class="autoopen">自动打开文件：<input type="checkbox" name="autoopen" id="ao"></div>
+          </div>
+          
         </div>
         <div class="footer">
           <div class="help" onclick="taphelp()">如何使用？</div>
         </div>
     </div>
+
+    <div class="dropwrap" id="dropwrap">
+    </div>
+    <script>
+      /**
+     * 渲染进程
+     */
+    const fs = require('fs');
+
+    function getProcessInfo() {
+        console.log("cpu", process.env)
+    }
+    const dropwrapper = document.getElementById("dropwrap");
+    document.addEventListener('drop', (e) => {
+        e.preventDefault()
+        dropwrapper.style.visibility='hidden'
+        const files = e.dataTransfer.files;
+        if (files) {
+            console.log('path',files[0].path )
+          ipcRenderer.send('dragstart',files[0].path)
+        }
+    })
+
+    document.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropwrapper.style.visibility='visible'
+    })
+    dropwrapper.addEventListener('dragleave', (e) => {
+        e.preventDefault();
+        dropwrapper.style.visibility='hidden'
+    })
+    </script>
     <script>
       const Store=require('electron-store')
       var store=new Store()
@@ -195,10 +248,26 @@
         }
         opendialog()
       })
-      ipcRenderer.on('chooseok',function(e,files){
-        console.log(files)
+
+      var send_dir=document.getElementById('send_name');send_dir.innerHTML=store.get('sendpath')
+      send_dir.addEventListener('click',function(e){
+        //ipcRenderer.send('choosepath')
+        e.cancelBubble=true
+        async function openSendDialog(){
+          const result=await remote.dialog.showOpenDialog({
+            properties: ['openDirectory'],
+          }).then(e=>{
+            if(!e.canceled){
+              send_dir.innerHTML=e.filePaths[0]
+              store.set('sendpath',e.filePaths[0])
+              remote.app.SENDPATH=store.get('sendpath')
+              
+            }
+            console.log(remote.app.SENDPATH)
+          })
+        }
+        openSendDialog()
       })
-      console.log(store.get())
     </script>
   </body>
   
