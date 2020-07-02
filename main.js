@@ -290,15 +290,26 @@ e_app.listen(port, function () {
 
 })
 function getIp() {
-  var interfaces = require('os').networkInterfaces();
-  for (var devName in interfaces) {
-    var iface = interfaces[devName];
-    for (var i = 0; i < iface.length; i++) {
-      var alias = iface[i];
-      if (alias.family === 'IPv4' && alias.address !== '127.0.0.1' && !alias.internal) {
-        return alias.address;
+  // var interfaces = require('os').networkInterfaces();
+  // for (var devName in interfaces) {
+  //   var iface = interfaces[devName];
+  //   for (var i = 0; i < iface.length; i++) {
+  //     var alias = iface[i];
+  //     if (alias.family === 'IPv4' && alias.address !== '127.0.0.1' && !alias.internal) {
+  //       return alias.address;
+  //     }
+  //   }
+  // }
+  var os = require('os'),
+    iptable = {},
+    ifaces = os.networkInterfaces();
+  for (var dev in ifaces) {
+    ifaces[dev].forEach(function (details, alias) {
+      if (details.family == 'IPv4') {
+        iptable[dev + (alias ? ':' + alias : '')] = details.address;
       }
-    }
+    });
   }
+  return iptable[Object.keys(iptable)[0]];
 
 }
