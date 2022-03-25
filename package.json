@@ -10,7 +10,7 @@
   "author": "glink25",
   "license": "ISC",
   "devDependencies": {
-    "electron": "^9.0.4"
+    "electron": "^13.6.6"
   },
   "dependencies": {
     "electron-store": "^5.2.0",
